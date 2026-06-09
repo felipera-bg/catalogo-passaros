@@ -7,6 +7,8 @@ class Captura {
   final String urlImagem;
   final String usuarioId;
   final List<String> especiesId;
+  final String? usuarioNome;
+  final String? usuarioFoto;
 
   const Captura({
     required this.id,
@@ -15,6 +17,8 @@ class Captura {
     required this.urlImagem,
     required this.usuarioId,
     required this.especiesId,
+    this.usuarioNome,
+    this.usuarioFoto,
   });
 
   factory Captura.fromFirestore(DocumentSnapshot doc) {
@@ -26,6 +30,8 @@ class Captura {
       urlImagem: data['url_imagem'] as String? ?? '',
       usuarioId: data['usuario_id'] as String? ?? '',
       especiesId: List<String>.from(data['especies_id'] as List? ?? []),
+      usuarioNome: data['usuario_nome'] as String?,
+      usuarioFoto: data['usuario_foto'] as String?,
     );
   }
 
@@ -36,6 +42,8 @@ class Captura {
       'url_imagem': urlImagem,
       'usuario_id': usuarioId,
       'especies_id': especiesId,
+      if (usuarioNome != null) 'usuario_nome': usuarioNome,
+      if (usuarioFoto != null) 'usuario_foto': usuarioFoto,
     };
   }
 }

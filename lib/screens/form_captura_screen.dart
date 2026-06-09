@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -32,6 +33,7 @@ class _FormCapturaScreenState extends State<FormCapturaScreen> {
   late Set<String> _selectedEspecies;
   File? _imageFile;
   bool _loading = false;
+  String _especieSearch = '';
 
   bool get _isEditing => widget.captura != null;
 
@@ -90,13 +92,27 @@ class _FormCapturaScreenState extends State<FormCapturaScreen> {
   }
 
   Future<void> _selectDate() async {
-    final picked = await showDatePicker(
+    final pickedDate = await showDatePicker(
       context: context,
       initialDate: _dataFoto,
       firstDate: DateTime(2000),
       lastDate: DateTime.now(),
     );
-    if (picked != null) setState(() => _dataFoto = picked);
+    if (pickedDate == null || !mounted) return;
+
+    final pickedTime = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(_dataFoto),
+    );
+
+    final time = pickedTime ?? TimeOfDay.fromDateTime(_dataFoto);
+    setState(() => _dataFoto = DateTime(
+          pickedDate.year,
+          pickedDate.month,
+          pickedDate.day,
+          time.hour,
+          time.minute,
+        ));
   }
 
   Future<void> _save() async {
@@ -129,6 +145,7 @@ class _FormCapturaScreenState extends State<FormCapturaScreen> {
           await StorageService.deleteImageByUrl(widget.captura!.urlImagem);
         }
       } else {
+        final user = FirebaseAuth.instance.currentUser;
         final url =
             await StorageService.uploadImage(_imageFile!, widget.userId);
         await FirestoreService.addCaptura(
@@ -139,6 +156,8 @@ class _FormCapturaScreenState extends State<FormCapturaScreen> {
             urlImagem: url,
             usuarioId: widget.userId,
             especiesId: _selectedEspecies.toList(),
+            usuarioNome: user?.email?.split('@')[0],
+            usuarioFoto: user?.photoURL,
           ),
         );
       }
@@ -178,28 +197,31 @@ class _FormCapturaScreenState extends State<FormCapturaScreen> {
             ),
         ],
       ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            _buildImagePicker(),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _tituloController,
-              decoration: const InputDecoration(
-                labelText: 'Título',
-                border: OutlineInputBorder(),
+      body: SafeArea(
+        child: Form(
+          key: _formKey,
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              _buildImagePicker(),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _tituloController,
+                decoration: const InputDecoration(
+                  labelText: 'Título',
+                  border: OutlineInputBorder(),
+                ),
+                maxLength: 100,
+                validator: (v) =>
+                    (v == null || v.trim().isEmpty) ? 'Informe um título' : null,
               ),
-              maxLength: 100,
-              validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'Informe um título' : null,
-            ),
-            const SizedBox(height: 8),
-            _buildDateField(),
-            const SizedBox(height: 16),
-            _buildEspeciesSelector(),
-          ],
+              const SizedBox(height: 8),
+              _buildDateField(),
+              const SizedBox(height: 16),
+              _buildEspeciesSelector(),
+              const SizedBox(height: 16),
+            ],
+          ),
         ),
       ),
     );
@@ -266,16 +288,24 @@ class _FormCapturaScreenState extends State<FormCapturaScreen> {
       borderRadius: BorderRadius.circular(4),
       child: InputDecorator(
         decoration: const InputDecoration(
-          labelText: 'Data da foto',
+          labelText: 'Data e hora da foto',
           border: OutlineInputBorder(),
           prefixIcon: Icon(Icons.calendar_today),
         ),
-        child: Text(DateFormat('dd/MM/yyyy').format(_dataFoto)),
+        child: Text(DateFormat('dd/MM/yyyy HH:mm').format(_dataFoto)),
       ),
     );
   }
 
   Widget _buildEspeciesSelector() {
+    final filtered = _especieSearch.isEmpty
+        ? widget.especies
+        : widget.especies
+            .where((e) => e.nome
+                .toLowerCase()
+                .contains(_especieSearch.toLowerCase()))
+            .toList();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -284,29 +314,45 @@ class _FormCapturaScreenState extends State<FormCapturaScreen> {
           style: Theme.of(context).textTheme.titleMedium,
         ),
         const SizedBox(height: 8),
+        if (widget.especies.isNotEmpty)
+          TextField(
+            decoration: const InputDecoration(
+              hintText: 'Pesquisar espécie...',
+              prefixIcon: Icon(Icons.search),
+              border: OutlineInputBorder(),
+              isDense: true,
+            ),
+            onChanged: (v) => setState(() => _especieSearch = v),
+          ),
+        const SizedBox(height: 8),
         widget.especies.isEmpty
             ? const Text(
                 'Nenhuma espécie disponível',
                 style: TextStyle(color: Colors.grey),
               )
-            : Wrap(
-                spacing: 8,
-                runSpacing: 4,
-                children: widget.especies.map((e) {
-                  final selected = _selectedEspecies.contains(e.id);
-                  return FilterChip(
-                    label: Text(e.nome),
-                    selected: selected,
-                    onSelected: (v) => setState(() {
-                      if (v) {
-                        _selectedEspecies.add(e.id);
-                      } else {
-                        _selectedEspecies.remove(e.id);
-                      }
-                    }),
-                  );
-                }).toList(),
-              ),
+            : filtered.isEmpty
+                ? const Text(
+                    'Nenhuma espécie encontrada',
+                    style: TextStyle(color: Colors.grey),
+                  )
+                : Wrap(
+                    spacing: 8,
+                    runSpacing: 4,
+                    children: filtered.map((e) {
+                      final selected = _selectedEspecies.contains(e.id);
+                      return FilterChip(
+                        label: Text(e.nome),
+                        selected: selected,
+                        onSelected: (v) => setState(() {
+                          if (v) {
+                            _selectedEspecies.add(e.id);
+                          } else {
+                            _selectedEspecies.remove(e.id);
+                          }
+                        }),
+                      );
+                    }).toList(),
+                  ),
       ],
     );
   }

@@ -14,6 +14,7 @@ class AuthService {
   static Future<void> initialize() {
     return GoogleSignIn.instance.initialize(
       clientId: kIsWeb ? _webClientId : null,
+      serverClientId: _webClientId,
     );
   }
 

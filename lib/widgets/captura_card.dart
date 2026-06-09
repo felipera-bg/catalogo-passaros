@@ -21,7 +21,7 @@ class CapturaCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final especiesCaptura =
         especies.where((e) => captura.especiesId.contains(e.id)).toList();
-    final dataFormatada = DateFormat('dd/MM/yyyy').format(captura.dataFoto);
+    final dataFormatada = DateFormat('dd/MM/yyyy HH:mm').format(captura.dataFoto);
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),

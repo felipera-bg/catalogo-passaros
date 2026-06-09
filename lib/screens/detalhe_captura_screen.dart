@@ -25,7 +25,9 @@ class DetalheCapturaScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final especiesCaptura =
         especies.where((e) => captura.especiesId.contains(e.id)).toList();
-    final dataFormatada = DateFormat('dd/MM/yyyy').format(captura.dataFoto);
+    final dataFormatada =
+        DateFormat('dd/MM/yyyy HH:mm').format(captura.dataFoto);
+    final nome = captura.usuarioNome ?? 'Usuário';
 
     return Scaffold(
       appBar: AppBar(
@@ -79,6 +81,20 @@ class DetalheCapturaScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Row(
+                    children: [
+                      _buildAvatar(),
+                      const SizedBox(width: 10),
+                      Text(
+                        nome,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
                   Text(
                     captura.titulo,
                     style: Theme.of(context).textTheme.headlineSmall,
@@ -86,7 +102,7 @@ class DetalheCapturaScreen extends StatelessWidget {
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      const Icon(Icons.calendar_today, size: 16),
+                      const Icon(Icons.access_time, size: 16),
                       const SizedBox(width: 6),
                       Text(dataFormatada),
                     ],
@@ -128,6 +144,25 @@ class DetalheCapturaScreen extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildAvatar() {
+    final photoUrl = captura.usuarioFoto;
+    final nome = captura.usuarioNome;
+    if (photoUrl != null && photoUrl.isNotEmpty) {
+      return CircleAvatar(
+        radius: 18,
+        backgroundImage: NetworkImage(photoUrl),
+        backgroundColor: Colors.grey[200],
+      );
+    }
+    return CircleAvatar(
+      radius: 18,
+      child: Text(
+        nome?.isNotEmpty == true ? nome![0].toUpperCase() : '?',
+        style: const TextStyle(fontWeight: FontWeight.bold),
       ),
     );
   }
