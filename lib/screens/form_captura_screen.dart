@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -145,7 +144,6 @@ class _FormCapturaScreenState extends State<FormCapturaScreen> {
           await StorageService.deleteImageByUrl(widget.captura!.urlImagem);
         }
       } else {
-        final user = FirebaseAuth.instance.currentUser;
         final url =
             await StorageService.uploadImage(_imageFile!, widget.userId);
         await FirestoreService.addCaptura(
@@ -156,8 +154,6 @@ class _FormCapturaScreenState extends State<FormCapturaScreen> {
             urlImagem: url,
             usuarioId: widget.userId,
             especiesId: _selectedEspecies.toList(),
-            usuarioNome: user?.email?.split('@')[0],
-            usuarioFoto: user?.photoURL,
           ),
         );
       }

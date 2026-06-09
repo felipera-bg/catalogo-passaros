@@ -23,11 +23,12 @@ class DetalheCapturaScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final especiesCaptura =
-        especies.where((e) => captura.especiesId.contains(e.id)).toList();
-    final dataFormatada =
-        DateFormat('dd/MM/yyyy HH:mm').format(captura.dataFoto);
-    final nome = captura.usuarioNome ?? 'Usuário';
+    final especiesCaptura = especies
+        .where((e) => captura.especiesId.contains(e.id))
+        .toList();
+    final dataFormatada = DateFormat(
+      'dd/MM/yyyy HH:mm',
+    ).format(captura.dataFoto);
 
     return Scaffold(
       appBar: AppBar(
@@ -73,7 +74,11 @@ class DetalheCapturaScreen extends StatelessWidget {
               errorWidget: (_, _, _) => Container(
                 height: 280,
                 color: Colors.grey[200],
-                child: const Icon(Icons.broken_image, size: 64, color: Colors.grey),
+                child: const Icon(
+                  Icons.broken_image,
+                  size: 64,
+                  color: Colors.grey,
+                ),
               ),
             ),
             Padding(
@@ -81,19 +86,6 @@ class DetalheCapturaScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      _buildAvatar(),
-                      const SizedBox(width: 10),
-                      Text(
-                        nome,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                        ),
-                      ),
-                    ],
-                  ),
                   const SizedBox(height: 12),
                   Text(
                     captura.titulo,
@@ -148,25 +140,6 @@ class DetalheCapturaScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildAvatar() {
-    final photoUrl = captura.usuarioFoto;
-    final nome = captura.usuarioNome;
-    if (photoUrl != null && photoUrl.isNotEmpty) {
-      return CircleAvatar(
-        radius: 18,
-        backgroundImage: NetworkImage(photoUrl),
-        backgroundColor: Colors.grey[200],
-      );
-    }
-    return CircleAvatar(
-      radius: 18,
-      child: Text(
-        nome?.isNotEmpty == true ? nome![0].toUpperCase() : '?',
-        style: const TextStyle(fontWeight: FontWeight.bold),
-      ),
-    );
-  }
-
   Future<void> _confirmDelete(BuildContext context) async {
     final confirm = await showDialog<bool>(
       context: context,
@@ -180,10 +153,7 @@ class DetalheCapturaScreen extends StatelessWidget {
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text(
-              'Excluir',
-              style: TextStyle(color: Colors.red),
-            ),
+            child: const Text('Excluir', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
